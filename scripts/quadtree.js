@@ -19,6 +19,35 @@ class Rectangle {
             point.y >= this.y - this.h &&
             point.y <= this.y + this.h)
     }
+
+    intersects(range) {
+        return (this.x - this.w < range.x + range.w &&
+                this.x + this.w > range.x - range.w &&
+                this.y - this.h < range.y + range.h  &&
+                this.y + this.h > range.y - range.h )
+    }
+}
+
+class Circle {
+    constructor(x,y,r)
+    {
+        this.x = x
+        this.y = y
+        this.r = r
+    }
+
+    intersects(otherCircle)
+    {
+        distance = Math.sqrt((this.x-otherCircle.x)**2 + (this.y-otherCircle.x)**2)
+        if (distance <= (this.r + otherCircle.r)/2)
+        {
+            return true
+        }
+        else
+        {
+            return false
+        }
+    }
 }
 
 class QuadTree {
@@ -69,6 +98,40 @@ class QuadTree {
             if (this.se.insert(point)) return true;
             if (this.sw.insert(point)) return true;
 
+        }
+    }
+
+    query(range, arr) {
+        let found;
+        if (!arr) {
+            found = []
+        }
+        else
+        {
+            found = arr;
+        }
+        if (!this.boundary.intersects(range)) {
+            return found; // empty
+        } else {
+            for (let p of this.points) {
+                if (range.contains(p)) {
+                    found.push(p);
+                }
+            }
+
+            if (this.divided)
+            {
+                this.nw.query(range, found);
+                this.ne.query(range, found);
+                this.sw.query(range, found);
+                this.se.query(range, found);
+            }
+            for (let p of found)
+            {
+                strokeWeight(10);
+                point(p.x, p.y)    
+            }
+            return found;
         }
     }
 
