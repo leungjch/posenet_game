@@ -1,5 +1,5 @@
 # Emoji ninja
-A unique bullet hell-like game where the player is controlled by your body! Think Kinect but with any cheap webcam, thanks to recent advances in machine learning pose estimation (specifically, the PoseNet model).
+A unique bullet hell-like game where the player is controlled by your body! Think Kinect but with any cheap webcam, thanks to recent advances in machine learning pose estimation.
 
 # Instructions
 - Set up a webcam that shows a clear space. **Make sure your surroundings are clear of potential sources of injuries (e.g. walls, tripping hazards)!**
@@ -15,3 +15,4 @@ A unique bullet hell-like game where the player is controlled by your body! Thin
 
 # Misc
 Graphics implemented in in p5.js. Pose estimation was done using the pretrained PoseNet model from ml5.js. 
+- Implemented a Quadtree data structure to improve collision detection time complexity from O(n^2) to O(nlogn).
