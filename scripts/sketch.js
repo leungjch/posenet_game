@@ -180,11 +180,15 @@ function draw() {
     fill(0,255,0)
 
     // Draw the player
-    
+    // Draw head
     fill(255, 255, 0);
     ellipse(player.headX, player.headY, player.headRadius);
-    image(grin, player.headX, player.headY, player.headRadius, player.headRadius)
+    image(grin, player.headX-player.headRadius/2, player.headY-player.headRadius/2, player.headRadius, player.headRadius)
+    // Draw HP
+    textSize(100)
+    text(player.hp, player.headX-player.headRadius/2, player.headY-player.headRadius/2)
 
+    // Draw wrists
     fill(0, 0, 255);
     ellipse(player.leftWristX, player.leftWristY, player.leftWristRadius);
     ellipse(player.rightWristX, player.rightWristY, player.rightWristRadius);
