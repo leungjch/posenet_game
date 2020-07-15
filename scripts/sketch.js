@@ -43,12 +43,16 @@ class Player {
         // Set everything in the middle by default
         this.leftWristX = WIDTH/2
         this.leftWristY = HEIGHT/2
+        this.leftWristRadius = 256;
+
 
         this.rightWristX = WIDTH/2
         this.rightWristY = HEIGHT/2
+        this.rightWristRadius = 256;
 
         this.headX = WIDTH/2
         this.headY = HEIGHT/2
+        this.headRadius = 256;
 
     }
 }
@@ -58,6 +62,8 @@ let video;
 let poseNet;
 let pose;
 let skeleton;
+
+let grin;
 
 let WIDTH = 1920;
 let HEIGHT = 1080;
@@ -106,6 +112,9 @@ function setup() {
 
   scaleWidth = WIDTH/video.width;
   scaleHeight = HEIGHT/video.height;
+
+  // Load emoji
+  grin = loadImage('./icons/grinning_msft.png')
     // scaleWidth = 1
     // scaleHeight = 1
 
@@ -173,10 +182,12 @@ function draw() {
     // Draw the player
     
     fill(255, 255, 0);
-    ellipse(player.headX, player.headY, 256);
+    ellipse(player.headX, player.headY, player.headRadius);
+    image(grin, player.headX, player.headY, player.headRadius, player.headRadius)
+
     fill(0, 0, 255);
-    ellipse(player.leftWristX, player.leftWristY, 256);
-    ellipse(player.rightWristX, player.rightWristY, 256);
+    ellipse(player.leftWristX, player.leftWristY, player.leftWristRadius);
+    ellipse(player.rightWristX, player.rightWristY, player.rightWristRadius);
 
     fill(255, 0, 0);
 
@@ -185,10 +196,19 @@ function draw() {
     {
         enemy.move(player.headX,player.headY)
         ellipse(enemy.x, enemy.y, enemy.radius)
-        if (checkCollision(player.leftWristX, enemy.x, player.leftWristY, enemy.y, 256, enemy.radius) || 
-            checkCollision(player.rightWristX, enemy.x, player.rightWristY, enemy.y, 256, enemy.radius))
+
+        // Check enemy collision against left and right wrists
+        if (checkCollision(player.leftWristX, enemy.x, player.leftWristY, enemy.y, player.leftWristRadius, enemy.radius) || 
+            checkCollision(player.rightWristX, enemy.x, player.rightWristY, enemy.y, player.rightWristRadius, enemy.radius))
         {
             enemies.splice(enemies.indexOf(enemy),1)
+        }
+
+        // Check enemy collision against head
+        if (checkCollision(player.headX, enemy.x, player.headY, enemy.y, player.headRadius, enemy.radius))
+        {
+            enemies.splice(enemies.indexOf(enemy),1)
+            player.hp -= 1
         }
     }
 
