@@ -2,12 +2,12 @@
 class Enemy {
     constructor()
     {
-        this.speed = Math.random()
+        this.speed = Math.random()*5
 
         // Geometry
         let randY = Math.floor(Math.random()*WIDTH)
         let randX = Math.floor(Math.random()*HEIGHT)
-        let randR = Math.ceil(Math.random()*32)+16
+        let randR = Math.ceil(Math.random()*128)+16
         this.circle = new Circle(randX, randY, randR);
     }
     move(player)

@@ -65,8 +65,19 @@ for (var i = 0; i < 10; i++)
 function gotPoses(poses) {
     //console.log(poses); 
     if (poses.length > 0) {
-      pose = poses[0].pose;
-      skeleton = poses[0].skeleton;
+        pose = poses[0].pose;
+        skeleton = poses[0].skeleton;
+
+        let nX = poses[0].pose.keypoints[0].position.x;
+        let nY = poses[0].pose.keypoints[0].position.y;
+        // let eX = poses[0].pose.keypoints[1].position.x;
+        // let eY = poses[0].pose.keypoints[1].position.y;
+        // player.head.x = lerp(player.head.x, nX, 0.5);
+        // player.head.y = lerp(player.head.y, nY, 0.5);
+        // eyelX = lerp(eyelX, eX, 0.5);
+        // eyelY = lerp(eyelY, eY, 0.5);
+
+
     }
   }
   
@@ -75,7 +86,20 @@ function setup() {
     createCanvas(WIDTH, HEIGHT);
     video = createCapture(VIDEO);
     video.hide();
-    poseNet = ml5.poseNet(video, modelLoaded);
+    player = new Player();  
+
+    poseNet = ml5.poseNet(video, modelLoaded, 
+        options = {
+            imageScaleFactor: 0.1,
+            outputStride: 16,
+            flipHorizontal: false,
+            minConfidence: 0.5,
+            maxPoseDetections: 5,
+            scoreThreshold: 0.5,
+            nmsRadius: 20,
+            detectionType: 'single',
+            multiplier: 0.75,
+        });
     poseNet.on('pose', gotPoses);
 
     scaleWidth = WIDTH/video.width;
@@ -88,8 +112,6 @@ function setup() {
     // scaleWidth = 1
     // scaleHeight = 1
 
-    player = new Player();  
-
 }
 
 function modelLoaded() {
@@ -99,7 +121,6 @@ function modelLoaded() {
 function draw() {
 
     push();
-
     // Make the webcam view half transparent
     transparencyc = color(255,255,255);
     transparencyc.setAlpha(128)
@@ -110,9 +131,9 @@ function draw() {
     // Flip webcam
     scale(-1, 1); 
     image(video, 0, 0, WIDTH, HEIGHT);
-    pop();
     fill(transparencyc)
     rect(0,0, WIDTH,HEIGHT)
+    pop();
 
     // Fetch pose
     if (pose) {
@@ -124,14 +145,22 @@ function draw() {
     // Flip and scale pose coordinates and store them in player
     // player.head.x = WIDTH - scaleWidth * pose.nose.x
     // player.head.y = scaleHeight * pose.nose.y
-    player.head.x = WIDTH - (WIDTH * pose.nose.x/video.width)
-    player.head.y = HEIGHT * pose.nose.y/video.height
+    // player.head.x = WIDTH - (WIDTH * pose.nose.x/video.width)
+    // player.head.y = HEIGHT * pose.nose.y/video.height
 
-    player.left.x = WIDTH - (WIDTH * pose.leftWrist.x/video.width)
-    player.left.y = HEIGHT * pose.leftWrist.y/video.height
+    let nX = pose.keypoints[0].position.x;
+    let nY = pose.keypoints[0].position.y;
+    // let eX = poses[0].pose.keypoints[1].position.x;
+    // let eY = poses[0].pose.keypoints[1].position.y;
+    player.head.x = lerp(player.head.x, WIDTH - (WIDTH * pose.nose.x/video.width), 0.5);
+    player.head.y = lerp(player.head.y, HEIGHT * pose.nose.y/video.height, 0.5);
+    // player.head.r = d*10
 
-    player.right.x = WIDTH - (WIDTH * pose.rightWrist.x/video.width)
-    player.right.y = HEIGHT * pose.rightWrist.y/video.height
+    player.left.x = lerp(player.left.x, WIDTH - (WIDTH * pose.leftWrist.x/video.width), 1)
+    player.left.y = lerp(player.left.y, HEIGHT * pose.leftWrist.y/video.height, 1)
+
+    player.right.x = lerp(player.right.x, WIDTH - (WIDTH * pose.rightWrist.x/video.width),1 )
+    player.right.y = lerp(player.right.y, HEIGHT * pose.rightWrist.y/video.height, 1)
     }
     // for (let i = 0; i < pose.keypoints.length; i++) {
     //   let x = pose.keypoints[i].position.x;
@@ -152,9 +181,11 @@ function draw() {
     // Draw the player
     // Draw head
     fill(255, 255, 0);
-    ellipse(player.head.x, player.head.y, player.head.r);
+    // ellipse(player.head.x, player.head.y, player.head.r);
     image(grin, player.head.x-player.head.r/2, player.head.y-player.head.r/2, player.head.r, player.head.r)
+
     // Draw HP
+    fill(0,0,0)
     textSize(100)
     text(player.hp, player.head.x-player.head.r/2, player.head.y-player.head.r/2)
 
@@ -198,23 +229,57 @@ function draw() {
       }
 
     // Query quadtree
-    let range = new Circle(player.head.x, player.head.y, player.head.r * 0.5);
-    console.log(range)
+    let headRange = new Circle(player.head.x, player.head.y, player.head.r * 0.5);
 
-    let rangePoints = qtree.query(range); // Possible points of collision near the query
-    console.log(rangePoints)
+    let rangePoints = qtree.query(headRange); // Possible points of collision near the query
     for (let point of rangePoints) {
         if (player.head.contains(point))
         {
-            player.hp -= 1
+            fill(255,0,0)
+            textSize(point.entity.circle.r * 2)
+            text("-" + Math.floor(player.hp), player.head.x-player.head.r/2, player.head.y-player.head.r/2)
+            
+            player.hp -= point.entity.circle.r * 4
+            // point.entity.circle.r*=1.02
             enemies.splice(enemies.indexOf(point.entity),1)
         }
     }
-    qtree.show();    
+
+    let leftRange = new Circle(player.left.x, player.left.y, player.left.r * 0.5);
+    let rightRange = new Circle(player.right.x, player.right.y, player.right.r * 0.5);
+    let leftRangePoints = qtree.query(leftRange); // Possible points of collision near the query
+    let rightRangePoints = qtree.query(rightRange); // Possible points of collision near the query
+
+    for (let point of leftRangePoints) {
+        if (player.left.contains(point))
+        {
+            fill(0,255,0)
+            textSize(point.entity.circle.r*3)
+            text("+" + Math.floor(point.entity.circle.r), player.left.x-player.left.r/2 + Math.random()*64, player.left.y-player.left.r/2)
+            point.entity.circle.r/=player.damage
+
+            // enemies.splice(enemies.indexOf(point.entity),1)
+            player.hp += point.entity.circle.r
+
+        }
+    }
+    for (let point of rightRangePoints) {
+        if (player.right.contains(point))
+        {
+            fill(0,255,0)
+            textSize(point.entity.circle.r*3)
+            text("+" + Math.floor(point.entity.circle.r), player.right.x-player.right.r/2 + Math.random()*64, player.right.y-player.right.r/2)
+            point.entity.circle.r/=player.damage
+
+            // enemies.splice(enemies.indexOf(point.entity),1)
+            player.hp += point.entity.circle.r
+
+        }
+    }
+    // qtree.show();    
       
 
-
-    if (Math.random()>0.5)
+    if (Math.random()>0.8)
     {
         enemies.push(new Enemy())
     }
