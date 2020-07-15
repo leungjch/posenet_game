@@ -142,16 +142,8 @@ function draw() {
     let eyeL = pose.leftEye;
     let d = dist(eyeR.x, eyeR.y, eyeL.x, eyeL.y);
 
-    // Flip and scale pose coordinates and store them in player
-    // player.head.x = WIDTH - scaleWidth * pose.nose.x
-    // player.head.y = scaleHeight * pose.nose.y
-    // player.head.x = WIDTH - (WIDTH * pose.nose.x/video.width)
-    // player.head.y = HEIGHT * pose.nose.y/video.height
 
-    let nX = pose.keypoints[0].position.x;
-    let nY = pose.keypoints[0].position.y;
-    // let eX = poses[0].pose.keypoints[1].position.x;
-    // let eY = poses[0].pose.keypoints[1].position.y;
+    // Flip and scale pose coordinates and store them in player
     player.head.x = lerp(player.head.x, WIDTH - (WIDTH * pose.nose.x/video.width), 0.5);
     player.head.y = lerp(player.head.y, HEIGHT * pose.nose.y/video.height, 0.5);
     // player.head.r = d*10
@@ -161,6 +153,24 @@ function draw() {
 
     player.right.x = lerp(player.right.x, WIDTH - (WIDTH * pose.rightWrist.x/video.width),1 )
     player.right.y = lerp(player.right.y, HEIGHT * pose.rightWrist.y/video.height, 1)
+
+    // Get "speed" of movements
+    let kineticLeft = Math.sqrt((player.left.x - player.leftPrev.x)**2 + (player.left.y - player.leftPrev.y)**2)/d
+    let kineticRight = Math.sqrt((player.right.x - player.rightPrev.x)**2 + (player.right.y - player.rightPrev.y)**2)/d
+    strokeWeight(kineticLeft*20)
+    line(player.leftPrev.x, player.leftPrev.y, player.left.x, player.left.y)
+    strokeWeight(kineticRight*20)
+    line(player.rightPrev.x, player.rightPrev.y, player.right.x, player.right.y)
+    // line(player.right.x, player.rightPrev.x, player.right.y, player.rightPrev.y)
+    strokeWeight(1)
+    console.log(kineticLeft, kineticRight)
+
+    // Update previous wrist positions
+    player.rightPrev.x = player.right.x
+    player.rightPrev.y = player.right.y
+
+    player.leftPrev.x = player.left.x
+    player.leftPrev.y = player.left.y
     }
     // for (let i = 0; i < pose.keypoints.length; i++) {
     //   let x = pose.keypoints[i].position.x;
@@ -187,7 +197,7 @@ function draw() {
     // Draw HP
     fill(0,0,0)
     textSize(100)
-    text(player.hp, player.head.x-player.head.r/2, player.head.y-player.head.r/2)
+    text(Math.floor(player.hp), player.head.x-player.head.r/2, player.head.y-player.head.r/2)
 
     // Draw wrists
     fill(0, 0, 255);
@@ -255,11 +265,16 @@ function draw() {
         {
             fill(0,255,0)
             textSize(point.entity.circle.r*3)
-            text("+" + Math.floor(point.entity.circle.r), player.left.x-player.left.r/2 + Math.random()*64, player.left.y-player.left.r/2)
-            point.entity.circle.r/=player.damage
+            text("+" + Math.floor(point.entity.circle.r), player.left.x-player.left.r/2 + Math.random()*player.left.r, player.left.y-player.left.r/2 + Math.random()*player.left.r)
+            point.entity.circle.r/=player.damageLeft
 
             // enemies.splice(enemies.indexOf(point.entity),1)
             player.hp += point.entity.circle.r
+
+            if (point.entity.circle.r < 2)
+            {
+                enemies.splice(enemies.indexOf(point.entity),1)
+            }
 
         }
     }
@@ -268,11 +283,16 @@ function draw() {
         {
             fill(0,255,0)
             textSize(point.entity.circle.r*3)
-            text("+" + Math.floor(point.entity.circle.r), player.right.x-player.right.r/2 + Math.random()*64, player.right.y-player.right.r/2)
-            point.entity.circle.r/=player.damage
+            text("+" + Math.floor(point.entity.circle.r), player.right.x-player.right.r/2 + Math.random()*player.right.r, player.right.y-player.right.r/2 + Math.random()*player.right.r)
+            point.entity.circle.r/=player.damageRight
 
             // enemies.splice(enemies.indexOf(point.entity),1)
             player.hp += point.entity.circle.r
+
+            if (point.entity.circle.r < 2)
+            {
+                enemies.splice(enemies.indexOf(point.entity),1)
+            }
 
         }
     }
