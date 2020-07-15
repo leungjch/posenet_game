@@ -4,8 +4,8 @@ let poseNet;
 let pose;
 let skeleton;
 
-let WIDTH = 1500;
-let HEIGHT = 1000;
+let WIDTH = 1920;
+let HEIGHT = 1080;
 
 class Enemy {
     constructor()
@@ -17,27 +17,44 @@ class Enemy {
     }
     move(playerX, playerY)
     {
+        var distance = Math.sqrt((playerX-this.x)**2 + (playerY-this.y)**2)
+        var ang = Math.atan(Math.abs(playerY-this.y)/Math.abs(playerX-this.x))
+        
+        
+
         if (this.x > playerX)
         {
-            this.x -= this.speed
+            this.x -= Math.cos(ang)*this.speed
         }
         else
         {
-            this.x += this.speed
+            this.x += Math.cos(ang)*this.speed
         }
         // If enemy is below player, move up
         if (this.y > playerY)
         {
-            this.y -= this.speed
+            this.y -= Math.sin(ang)*this.speed
         }
         else
         {
-            this.y += this.speed
+            this.y += Math.sin(ang)*this.speed
         }
         
     }
 }
 
+function checkCollision(x1, x2, y1, y2, r1, r2)
+{
+    distance = Math.sqrt((x1-x2)**2 + (y1-y2)**2)
+    if (distance <= (r1 + r2))
+    {
+        return true
+    }
+    else
+    {
+        return false
+    }
+}
 
 let en = new Enemy()
 let enemies = []
@@ -100,7 +117,7 @@ function draw() {
         let a = skeleton[i][0];
         let b = skeleton[i][1];
         strokeWeight(2);
-        stroke(255);
+        // stroke(255);
         line(a.position.x, a.position.y,b.position.x,b.position.y);      
     }
     fill(0,255,0)
@@ -110,9 +127,17 @@ function draw() {
     {
         enemy.move(pose.nose.x,pose.nose.y)
         ellipse(enemy.x, enemy.y, enemy.radius)
-
+        if (checkCollision(pose.rightWrist.x, enemy.x, pose.rightWrist.y, enemy.y, 32, enemy.radius) || 
+            checkCollision(pose.leftWrist.x, enemy.x, pose.leftWrist.y, enemy.y, 32, enemy.radius))
+        {
+            enemies.splice(enemies.indexOf(enemy),1)
+        }
     }
 
+    if (Math.random()>0.95)
+    {
+        enemies.push(new Enemy())
+    }
 
   
   }
