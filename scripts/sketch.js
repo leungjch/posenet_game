@@ -282,7 +282,7 @@ function draw() {
     }
     // qtree.show();    
 
-    if (Math.random()>0.9)
+    if (Math.random()>0.8 && enemies.length < 1000)
     {
         enemies.push(new Enemy(icons))
     }

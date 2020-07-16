@@ -8,11 +8,18 @@ class Enemy {
     constructor(icons)
     {
         this.types = ['roamer', 'seeker', 'robot']
+        // this.types = ['roamer']
+
         this.type = choose(this.types);
 
         if (this.type === 'roamer')
         {
             this.icon = icons['alien']
+            this.t = Math.random();
+            this.t = Math.random();
+
+            this.orbitDistance = Math.random()*WIDTH/3
+
         }
 
         if (this.type === 'seeker')
@@ -23,13 +30,15 @@ class Enemy {
         if (this.type === 'robot')
         {
             this.icon = icons['robot']
-            this.direction = choose(['left', 'up', 'down', 'rightDiag', 'leftDiag', 'right']);
+            // this.direction = choose(['left', 'up', 'down', 'rightDiag', 'leftDiag', 'right']);
+            this.direction = choose(['rightDiag', 'leftDiag']);
+
         }
 
         // Geometry
         let randY = Math.floor(Math.random()*HEIGHT)
         let randX = Math.floor(Math.random()*WIDTH)
-        let randR = Math.ceil(Math.random()*256)+16
+        let randR = Math.ceil(Math.random()*150)+16
         this.speed = Math.random()*10
 
         this.circle = new Circle(randX, randY, randR);
@@ -45,8 +54,14 @@ class Enemy {
 
         if (this.type === "roamer")
         {
-            this.circle.x += this.speed * (-1)**(Math.round(Math.random())) * 2
-            this.circle.y += this.speed * (-1)**(Math.round(Math.random())) * 2
+            this.circle.x = this.orbitDistance*cos(this.t) + playerX
+            this.circle.y = this.orbitDistance*sin(this.t) + playerY
+            
+            // this.circle.x += this.speed * cos(this.t) 
+            // this.circle.y += this.speed * sin(this.t) 
+            this.orbitDistance += sin(this.t*5)*5
+            this.t+=0.01
+            this.d += 0.001
         }
         else if (this.type === "seeker")
         {
