@@ -15,6 +15,14 @@ let player;
 
 let icons;
 
+let timeGameStart = 5 // 5 seconds to prepare before game starts
+let timeGamePlay = 60 // 60 seconds to play game
+
+let doneSetup = false;
+let setupCountdownStarted = false; // user hasn't clicked the start button
+
+let setupIntervalID;
+
 function checkCollision(x1, x2, y1, y2, r1, r2)
 {
     distance = Math.sqrt((x1-x2)**2 + (y1-y2)**2)
@@ -84,6 +92,8 @@ function setup() {
     {
         enemies.push(new Enemy(icons))
     }
+
+    // Show start screen
 }
 
 function modelLoaded() {
@@ -91,10 +101,12 @@ function modelLoaded() {
 }
 
 function draw() {
+    // timeGameStart -= 1
+
     push();
     // Make the webcam view half transparent
     transparencyc = color(255,255,255);
-    transparencyc.setAlpha(128)
+    transparencyc.setAlpha(lerp(128,255, timeGameStart/5))
 
     translate(WIDTH,0);  
     // We need to flip the webcam so that movement is less confusing
@@ -105,7 +117,52 @@ function draw() {
     fill(transparencyc)
     rect(0,0, WIDTH,HEIGHT)
     pop();
+    
+    if (doneSetup)
+    {
+        play();
+    }
+    else
+    {
+        if (timeGameStart < 0)
+        {
+            doneSetup = true;  
+            clearInterval(setupIntervalID)         
+        }
+        else if (mouseIsPressed && setupCountdownStarted === false)
+        {
+            setupIntervalID = setInterval(setupCountDownDec, 1000);
+            setupCountdownStarted = true
+        }
+        else if (setupCountdownStarted)
+        {
+            text(timeGameStart, WIDTH/2, HEIGHT/2)    
+        }
+        else
+        {
+            textAlign(CENTER);
+    
+            textSize(100)
+            fill(0)
+            text("CLICK TO START!", WIDTH/2, HEIGHT/2)    
+    
+        }
+    }
+    
+}
 
+function setupCountDownDec()
+{
+    timeGameStart -= 1
+}
+
+function init()
+{
+
+}
+
+function play()
+{
     // Fetch pose
     if (pose) {
     // Rough depth estimation by measuring the distance in coordinates between eyes
@@ -131,11 +188,19 @@ function draw() {
     let maxKin = Math.sqrt((WIDTH/2)**2+(HEIGHT/2)**2)
     
     // Draw punch effect
-    strokeWeight(kineticLeft)
+    strokeWeight(kineticLeft+30)
     stroke(255,255,255)
     line(player.leftPrev.x, player.leftPrev.y, player.left.x, player.left.y)
     strokeWeight(kineticRight)
     line(player.rightPrev.x, player.rightPrev.y, player.right.x, player.right.y)
+
+    // Draw inner punch effect
+    strokeWeight(Math.floor(kineticLeft/2)+30)
+    stroke(197,255,253)
+    line(player.leftPrev.x, player.leftPrev.y, player.left.x, player.left.y)
+    strokeWeight(Math.floor(kineticRight/2)+30)
+    line(player.rightPrev.x, player.rightPrev.y, player.right.x, player.right.y)
+
     // line(player.right.x, player.rightPrev.x, player.right.y, player.rightPrev.y)
     strokeWeight(1)
     console.log(Math.ceil(kineticLeft/maxKin*100), Math.ceil(kineticRight/maxKin*100))
@@ -286,5 +351,5 @@ function draw() {
     {
         enemies.push(new Enemy(icons))
     }
-}
 
+}
