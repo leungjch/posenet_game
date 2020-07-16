@@ -15,13 +15,16 @@ let player;
 
 let icons;
 
-let timeGameStart = 5 // 5 seconds to prepare before game starts
-let timeGamePlay = 60 // 60 seconds to play game
+let setupTime = 5 // 5 seconds to prepare before game starts
+let playTime = 60 // 60 seconds to play game
 
 let doneSetup = false;
+let donePlay = false;
 let setupCountdownStarted = false; // user hasn't clicked the start button
+let playCountdownStarted = false; // user hasn't clicked the start button
 
 let setupIntervalID;
+let playIntervalID;
 
 function checkCollision(x1, x2, y1, y2, r1, r2)
 {
@@ -101,12 +104,12 @@ function modelLoaded() {
 }
 
 function draw() {
-    // timeGameStart -= 1
 
+    // Show webcam
     push();
     // Make the webcam view half transparent
     transparencyc = color(255,255,255);
-    transparencyc.setAlpha(lerp(128,255, timeGameStart/5))
+    transparencyc.setAlpha(lerp(128,0, setupTime/5))
 
     translate(WIDTH,0);  
     // We need to flip the webcam so that movement is less confusing
@@ -118,16 +121,31 @@ function draw() {
     rect(0,0, WIDTH,HEIGHT)
     pop();
     
-    if (doneSetup)
+    // Play screen
+    if (doneSetup && !donePlay)
     {
+        // Show timer
+        textSize(200)
+        text(playTime, WIDTH/2, HEIGHT/4)
         play();
+
+        if (playTime < 0)
+        {
+            doneSetup = true;
+            donePlay = true;
+        }
     }
-    else
+    // Countdown (before playing)
+    else if (!doneSetup)
     {
-        if (timeGameStart < 0)
+        if (setupTime < 0)
         {
             doneSetup = true;  
-            clearInterval(setupIntervalID)         
+            clearInterval(setupIntervalID) 
+            
+            playIntervalID = setInterval(playCountDownDec, 1000);
+            playCountdownStarted = true
+
         }
         else if (mouseIsPressed && setupCountdownStarted === false)
         {
@@ -136,29 +154,79 @@ function draw() {
         }
         else if (setupCountdownStarted)
         {
-            text(timeGameStart, WIDTH/2, HEIGHT/2)    
+            // Show setup countdown
+            text(setupTime, WIDTH/2, HEIGHT/2)    
         }
         else
         {
             textAlign(CENTER);
-    
-            textSize(100)
             fill(0)
-            text("CLICK TO START!", WIDTH/2, HEIGHT/2)    
-    
+            stroke(255)
+            strokeWeight(5)
+
+            textSize(200)
+            fill(255)
+            noStroke()
+            text("Click to start!", WIDTH/2, HEIGHT/2)    
         }
+    }
+    // game over screen
+    else if (donePlay)
+    {
+        // clean up
+        // show score
+        textAlign(CENTER);
+        fill(0);
+        stroke(255);
+        strokeWeight(5);
+
+        textSize(200);
+        fill(0);
+        noStroke();
+        text("Your score: " + Math.ceil(player.hp), WIDTH/2, HEIGHT/2);
+        text("Play again?", WIDTH/2, 3*HEIGHT/4);
+
+
+        // clear countdown and reset countdown values
+        clearInterval(playIntervalID); 
+        playTime = 60;
+        setupTime = 5;
+        setupCountdownStarted = false;
+        playCountdownStarted = false
+
+        cleanup();
+
+        // Start game again if mouse clicked
+        if (mouseIsPressed)
+        {
+            setupIntervalID = setInterval(setupCountDownDec, 1000);
+            setupCountdownStarted = true
+            doneSetup = false
+
+            donePlay = false
+        }
+
     }
     
 }
 
 function setupCountDownDec()
 {
-    timeGameStart -= 1
+    setupTime -= 1
 }
-
+function playCountDownDec()
+{
+    playTime -= 1
+}
 function init()
 {
 
+}
+
+function cleanup()
+{
+    player = new Player();
+    enemies = []
 }
 
 function play()
