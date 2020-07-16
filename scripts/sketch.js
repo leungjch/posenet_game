@@ -1,31 +1,3 @@
-// let boundary = new Rectangle(200,200,200,200);
-// let qt = new QuadTree(boundary, 4);
-// console.log(qt)
-
-// for (let i = 0; i < 25; i++) {
-//     let p = new Point(Math.ceil(Math.random()*400), Math.ceil(Math.random()*400))
-//     qt.insert(p)
-// }
-// console.log(qt)
-// function setup()
-// {
-//     createCanvas(400,400)
-// }
-// function draw(){
-//     background(0)
-//     qt.show();
-
-//     stroke(0,255,0);
-//     rectMode(CENTER);
-//     let range = new Rectangle(250,250,107,75);
-    
-//     rect(range.x, range.y, range.w*2, range.h*2)
-//     let points = []
-//     qt.query(range,points)
-//     console.log(points);
-// }
-
-
 let video;
 let poseNet;
 let pose;
@@ -33,13 +5,15 @@ let skeleton;
 
 let grin;
 
-let WIDTH = 1920;
-let HEIGHT = 1080;
+let WIDTH; 
+let HEIGHT; 
 
 let scaleWidth;
 let scaleHeight;
 
 let player;
+
+let icons;
 
 function checkCollision(x1, x2, y1, y2, r1, r2)
 {
@@ -54,13 +28,7 @@ function checkCollision(x1, x2, y1, y2, r1, r2)
     }
 }
 
-let en = new Enemy()
-let enemies = []
-
-for (var i = 0; i < 10; i++)
-{
-    enemies.push(new Enemy())
-}
+let enemies = [];
 
 function gotPoses(poses) {
     //console.log(poses); 
@@ -68,25 +36,25 @@ function gotPoses(poses) {
         pose = poses[0].pose;
         skeleton = poses[0].skeleton;
 
-        let nX = poses[0].pose.keypoints[0].position.x;
-        let nY = poses[0].pose.keypoints[0].position.y;
         // let eX = poses[0].pose.keypoints[1].position.x;
         // let eY = poses[0].pose.keypoints[1].position.y;
         // player.head.x = lerp(player.head.x, nX, 0.5);
         // player.head.y = lerp(player.head.y, nY, 0.5);
         // eyelX = lerp(eyelX, eX, 0.5);
         // eyelY = lerp(eyelY, eY, 0.5);
-
-
     }
   }
   
 
 function setup() {
+    WIDTH = 1920;
+    HEIGHT = 1080;
+    
     createCanvas(WIDTH, HEIGHT);
     video = createCapture(VIDEO);
     video.hide();
     player = new Player();  
+    // frameRate(10)
 
     poseNet = ml5.poseNet(video, modelLoaded, 
         options = {
@@ -105,13 +73,17 @@ function setup() {
     scaleWidth = WIDTH/video.width;
     scaleHeight = HEIGHT/video.height;
 
-    // Load emoji
-    grin = loadImage('./icons/grinning_msft.png')
-    fist = loadImage('./icons/fist_msft.png')
-
-    // scaleWidth = 1
-    // scaleHeight = 1
-
+    icons = {  'grin': loadImage('./icons/grinning_msft.png'),
+                'fist': loadImage('./icons/fist_msft.png'),
+                'evil': loadImage('./icons/evil_msft.png'),
+                'alien': loadImage('./icons/alien_msft.png'),
+                'pain': loadImage('./icons/pain_msft.png'),
+                'robot': loadImage('./icons/robot_msft.png')
+    }
+    for (var i = 0; i < 10; i++)
+    {
+        enemies.push(new Enemy(icons))
+    }
 }
 
 function modelLoaded() {
@@ -119,7 +91,6 @@ function modelLoaded() {
 }
 
 function draw() {
-
     push();
     // Make the webcam view half transparent
     transparencyc = color(255,255,255);
@@ -141,7 +112,7 @@ function draw() {
     let eyeR = pose.rightEye;
     let eyeL = pose.leftEye;
     let d = dist(eyeR.x, eyeR.y, eyeL.x, eyeL.y);
-
+    let f = 1/d;
 
     // Flip and scale pose coordinates and store them in player
     player.head.x = lerp(player.head.x, WIDTH - (WIDTH * pose.nose.x/video.width), 0.5);
@@ -155,15 +126,21 @@ function draw() {
     player.right.y = lerp(player.right.y, HEIGHT * pose.rightWrist.y/video.height, 1)
 
     // Get "speed" of movements
-    let kineticLeft = Math.sqrt((player.left.x - player.leftPrev.x)**2 + (player.left.y - player.leftPrev.y)**2)/d
-    let kineticRight = Math.sqrt((player.right.x - player.rightPrev.x)**2 + (player.right.y - player.rightPrev.y)**2)/d
-    strokeWeight(kineticLeft*20)
+    let kineticLeft = Math.sqrt((player.left.x - player.leftPrev.x)**2 + (player.left.y - player.leftPrev.y)**2)
+    let kineticRight = Math.sqrt((player.right.x - player.rightPrev.x)**2 + (player.right.y - player.rightPrev.y)**2)
+    let maxKin = Math.sqrt((WIDTH/2)**2+(HEIGHT/2)**2)
+    
+    // Draw punch effect
+    strokeWeight(kineticLeft)
+    stroke(255,255,255)
     line(player.leftPrev.x, player.leftPrev.y, player.left.x, player.left.y)
-    strokeWeight(kineticRight*20)
+    strokeWeight(kineticRight)
     line(player.rightPrev.x, player.rightPrev.y, player.right.x, player.right.y)
     // line(player.right.x, player.rightPrev.x, player.right.y, player.rightPrev.y)
     strokeWeight(1)
-    console.log(kineticLeft, kineticRight)
+    console.log(Math.ceil(kineticLeft/maxKin*100), Math.ceil(kineticRight/maxKin*100))
+    player.damageLeft  = player.damageBase + kineticLeft/maxKin*2
+    player.damageRight = player.damageBase + kineticRight/maxKin*2
 
     // Update previous wrist positions
     player.rightPrev.x = player.right.x
@@ -192,7 +169,7 @@ function draw() {
     // Draw head
     fill(255, 255, 0);
     // ellipse(player.head.x, player.head.y, player.head.r);
-    image(grin, player.head.x-player.head.r/2, player.head.y-player.head.r/2, player.head.r, player.head.r)
+    image(icons['grin'], player.head.x-player.head.r/2, player.head.y-player.head.r/2, player.head.r, player.head.r)
 
     // Draw HP
     fill(0,0,0)
@@ -202,41 +179,45 @@ function draw() {
     // Draw wrists
     fill(0, 0, 255);
     ellipse(player.left.x, player.left.y, player.left.r);
-    image(fist, player.left.x-player.left.r/2, player.left.y-player.left.r/2, player.left.r, player.left.r)
+    image(icons['fist'], player.left.x-player.left.r/2, player.left.y-player.left.r/2, player.left.r, player.left.r)
 
     ellipse(player.right.x, player.right.y, player.right.r);
-    image(fist, player.right.x-player.right.r/2, player.right.y-player.right.r/2, player.right.r, player.right.r)
+    image(icons['fist'], player.right.x-player.right.r/2, player.right.y-player.right.r/2, player.right.r, player.right.r)
 
     fill(255, 0, 0);
-
-    // Build the quadtree
-    let boundary = new Rectangle(WIDTH/2, HEIGHT/2, WIDTH, HEIGHT);
-    let qtree = new QuadTree(boundary, 2);
 
     // Move enemies
     for (let enemy of enemies)
     {
         enemy.move(player)
-        ellipse(enemy.circle.x, enemy.circle.y, enemy.circle.r)
-        // // Check enemy collision against left and right wrists
-        // if (checkCollision(player.left.x, enemy.x, player.left.y, enemy.y, player.left.r, enemy.radius) || 
-        //     checkCollision(player.right.x, enemy.x, player.right.y, enemy.y, player.right.r, enemy.radius))
-        // {
-        //     enemies.splice(enemies.indexOf(enemy),1)
-        // }
-
-        // // Check enemy collision against head
-        // if (checkCollision(player.head.x, enemy.x, player.head.y, enemy.y, player.head.r, enemy.radius))
-        // {
-        //     enemies.splice(enemies.indexOf(enemy),1)
-        //     player.hp -= 1
-        // } 
+        image(enemy.icon, enemy.circle.x-enemy.circle.r/2, enemy.circle.y-enemy.circle.r/2, enemy.circle.r, enemy.circle.r)
     }
+
+    // Build the quadtree
+    let boundary = new Rectangle(WIDTH/2, HEIGHT/2, WIDTH, HEIGHT);
+    let qtree = new QuadTree(boundary, 2);
 
     for (let enemy of enemies) {
         let point = new Point(enemy.circle.x, enemy.circle.y, enemy);
         qtree.insert(point);
-      }
+        if (enemy.circle.x > WIDTH)
+        {
+            enemy.circle.x = 0
+        }
+        else if (enemy.circle.x < 0)
+        {
+            enemy.circle.x = WIDTH
+        }
+        if (enemy.circle.y > HEIGHT)
+        {
+            enemy.circle.y = 0
+        }
+        else if (enemy.circle.y < 0)
+        {
+            enemy.circle.y = HEIGHT
+        }
+        
+    }
 
     // Query quadtree
     let headRange = new Circle(player.head.x, player.head.y, player.head.r * 0.5);
@@ -248,8 +229,12 @@ function draw() {
             fill(255,0,0)
             textSize(point.entity.circle.r * 2)
             text("-" + Math.floor(player.hp), player.head.x-player.head.r/2, player.head.y-player.head.r/2)
-            
+
             player.hp -= point.entity.circle.r * 4
+
+            // Show pain face
+            image(icons['pain'], player.head.x-player.head.r/2, player.head.y-player.head.r/2, player.head.r, player.head.r)
+
             // point.entity.circle.r*=1.02
             enemies.splice(enemies.indexOf(point.entity),1)
         }
@@ -271,11 +256,10 @@ function draw() {
             // enemies.splice(enemies.indexOf(point.entity),1)
             player.hp += point.entity.circle.r
 
-            if (point.entity.circle.r < 2)
+            if (point.entity.circle.r < 50)
             {
                 enemies.splice(enemies.indexOf(point.entity),1)
             }
-
         }
     }
     for (let point of rightRangePoints) {
@@ -289,7 +273,7 @@ function draw() {
             // enemies.splice(enemies.indexOf(point.entity),1)
             player.hp += point.entity.circle.r
 
-            if (point.entity.circle.r < 2)
+            if (point.entity.circle.r < 50)
             {
                 enemies.splice(enemies.indexOf(point.entity),1)
             }
@@ -297,14 +281,10 @@ function draw() {
         }
     }
     // qtree.show();    
-      
 
-    if (Math.random()>0.8)
+    if (Math.random()>0.9)
     {
-        enemies.push(new Enemy())
+        enemies.push(new Enemy(icons))
     }
-
-  
-  
 }
 

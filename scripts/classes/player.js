@@ -3,9 +3,11 @@ class Player {
     constructor()
     {
         this.hp = 100
-        this.damageLeft = 1.2
-        this.damageRight = 1.2
-
+        this.damageBase = 1.05
+        this.damageLeft = 1.05
+        this.damageRight = 1.05
+        this.reactTime = 10 // show pain face for 10 frames
+        this.react = 0; // react iterator
         // Set everything in the middle by default
         let leftWristX = WIDTH/2
         let leftWristY = HEIGHT/2
