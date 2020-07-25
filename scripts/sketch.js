@@ -194,11 +194,12 @@ function draw() {
         setupCountdownStarted = false;
         playCountdownStarted = false
 
-        cleanup();
 
         // Start game again if mouse clicked
         if (mouseIsPressed)
         {
+            cleanup();
+
             setupIntervalID = setInterval(setupCountDownDec, 1000);
             setupCountdownStarted = true
             doneSetup = false
